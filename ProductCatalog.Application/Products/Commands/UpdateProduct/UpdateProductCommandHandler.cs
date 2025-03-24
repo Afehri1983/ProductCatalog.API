@@ -1,51 +1,54 @@
 using MediatR;
+using Microsoft.Extensions.Logging;
 using ProductCatalog.Application.Common.Interfaces;
 using ProductCatalog.Domain.Entities;
-using Microsoft.Extensions.Logging;
 
-namespace ProductCatalog.Application.Products.Commands.UpdateProduct
+namespace ProductCatalog.Application.Products.Commands.UpdateProduct;
+
+/// <summary>
+/// Handler for updating a product
+/// </summary>
+public class UpdateProductCommandHandler : IRequestHandler<UpdateProductCommand, bool>
 {
-    /// <summary>
-    /// Handler for updating a product
-    /// </summary>
-    public class UpdateProductCommandHandler : IRequestHandler<UpdateProductCommand, bool>
+    private readonly IProductRepository _repository;
+    private readonly ILogger<UpdateProductCommandHandler> _logger;
+
+    public UpdateProductCommandHandler(IProductRepository repository, ILogger<UpdateProductCommandHandler> logger)
     {
-        private readonly IProductRepository _repository;
-        private readonly ILogger<UpdateProductCommandHandler> _logger;
+        _repository = repository;
+        _logger = logger;
+    }
 
-        public UpdateProductCommandHandler(IProductRepository repository, ILogger<UpdateProductCommandHandler> logger)
+    /// <summary>
+    /// Handles the update product command
+    /// </summary>
+    /// <param name="request">The update product command</param>
+    /// <param name="cancellationToken">The cancellation token</param>
+    /// <returns>True if the product was updated, false if the product was not found</returns>
+    public async Task<bool> Handle(UpdateProductCommand request, CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("Attempting to update product with ID: {Id}", request.Id);
+
+        var existingProduct = await _repository.GetByIdAsync(request.Id);
+        if (existingProduct == null)
         {
-            _repository = repository ?? throw new ArgumentNullException(nameof(repository));
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _logger.LogWarning("Product with ID {Id} not found", request.Id);
+            return false;
         }
 
-        /// <summary>
-        /// Handles the update product command
-        /// </summary>
-        /// <param name="request">The update product command</param>
-        /// <param name="cancellationToken">The cancellation token</param>
-        /// <returns>True if the product was updated, false if the product was not found</returns>
-        public async Task<bool> Handle(UpdateProductCommand request, CancellationToken cancellationToken)
-        {
-            if (request == null)
-                throw new ArgumentNullException(nameof(request));
+        _logger.LogInformation("Found product with ID: {Id}, updating properties", request.Id);
 
-            _logger.LogInformation("Attempting to update product with ID: {ProductId}", request.Id);
+        var product = new Product(
+            request.Id,
+            request.Name,
+            request.Description,
+            request.Price,
+            request.Stock
+        );
 
-            var existingProduct = await _repository.GetByIdAsync(request.Id);
-            if (existingProduct == null)
-            {
-                _logger.LogWarning("Product with ID {ProductId} not found", request.Id);
-                return false;
-            }
-
-            _logger.LogInformation("Found product with ID: {ProductId}, updating properties", request.Id);
-
-            existingProduct.Update(request.Name, request.Description, request.Price, request.Stock);
-            await _repository.UpdateAsync(existingProduct);
-            
-            _logger.LogInformation("Successfully updated product with ID: {ProductId}", request.Id);
-            return true;
-        }
+        await _repository.UpdateAsync(product);
+        
+        _logger.LogInformation("Successfully updated product with ID: {Id}", request.Id);
+        return true;
     }
 } 

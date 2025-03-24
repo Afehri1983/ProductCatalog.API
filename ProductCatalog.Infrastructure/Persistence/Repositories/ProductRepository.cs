@@ -2,85 +2,81 @@ using Microsoft.EntityFrameworkCore;
 using ProductCatalog.Application.Common.Interfaces;
 using ProductCatalog.Domain.Entities;
 
-namespace ProductCatalog.Infrastructure.Persistence.Repositories
+namespace ProductCatalog.Infrastructure.Persistence.Repositories;
+
+/// <summary>
+/// Repository for managing Product entities in the database
+/// </summary>
+public class ProductRepository : IProductRepository
 {
-    /// <summary>
-    /// Repository for managing Product entities in the database
-    /// </summary>
-    public class ProductRepository : IProductRepository
+    private readonly ProductCatalogDbContext _context;
+
+    public ProductRepository(ProductCatalogDbContext context)
     {
-        private readonly ProductCatalogDbContext _context;
+        _context = context;
+    }
 
-        public ProductRepository(ProductCatalogDbContext context)
+    /// <summary>
+    /// Retrieves all products from the database
+    /// </summary>
+    public IEnumerable<Product> GetAll()
+    {
+        return _context.Products.ToList();
+    }
+
+    /// <summary>
+    /// Retrieves a product by its ID
+    /// </summary>
+    /// <param name="id">The ID of the product to retrieve</param>
+    /// <returns>The product if found, null otherwise</returns>
+    public Product? GetById(int id)
+    {
+        return _context.Products.Find(id);
+    }
+
+    /// <summary>
+    /// Adds a new product to the database
+    /// </summary>
+    /// <param name="product">The product to add</param>
+    /// <returns>The ID of the newly created product</returns>
+    public int Add(Product product)
+    {
+        _context.Products.Add(product);
+        _context.SaveChanges();
+        return product.Id;
+    }
+
+    /// <summary>
+    /// Updates an existing product in the database
+    /// </summary>
+    /// <param name="product">The product to update</param>
+    /// <exception cref="KeyNotFoundException">Thrown when the product is not found</exception>
+    public void Update(Product product)
+    {
+        var existingProduct = _context.Products.Find(product.Id);
+        if (existingProduct == null)
         {
-            _context = context ?? throw new ArgumentNullException(nameof(context));
+            throw new KeyNotFoundException($"Product with ID {product.Id} not found");
         }
 
-        /// <summary>
-        /// Retrieves all products from the database
-        /// </summary>
-        public async Task<IEnumerable<Product>> GetAllAsync()
+        _context.Entry(existingProduct).CurrentValues.SetValues(product);
+        _context.SaveChanges();
+    }
+
+    /// <summary>
+    /// Deletes a product from the database
+    /// </summary>
+    /// <param name="id">The ID of the product to delete</param>
+    public bool Delete(int id)
+    {
+        var product = _context.Products.Find(id);
+        if (product == null)
         {
-            return await _context.Products.ToListAsync();
+            return false;
         }
 
-        /// <summary>
-        /// Retrieves a product by its ID
-        /// </summary>
-        /// <param name="id">The ID of the product to retrieve</param>
-        /// <returns>The product if found, null otherwise</returns>
-        public async Task<Product?> GetByIdAsync(int id)
-        {
-            return await _context.Products.FindAsync(id);
-        }
-
-        /// <summary>
-        /// Adds a new product to the database
-        /// </summary>
-        /// <param name="product">The product to add</param>
-        /// <returns>The ID of the newly created product</returns>
-        public async Task<int> AddAsync(Product product)
-        {
-            if (product == null)
-                throw new ArgumentNullException(nameof(product));
-
-            _context.Products.Add(product);
-            await _context.SaveChangesAsync();
-            return product.Id;
-        }
-
-        /// <summary>
-        /// Updates an existing product in the database
-        /// </summary>
-        /// <param name="product">The product to update</param>
-        /// <exception cref="KeyNotFoundException">Thrown when the product is not found</exception>
-        public async Task UpdateAsync(Product product)
-        {
-            if (product == null)
-                throw new ArgumentNullException(nameof(product));
-
-            var existingProduct = await _context.Products.FindAsync(product.Id);
-            if (existingProduct == null)
-            {
-                throw new KeyNotFoundException($"Product with ID {product.Id} not found.");
-            }
-
-            _context.Entry(existingProduct).CurrentValues.SetValues(product);
-            await _context.SaveChangesAsync();
-        }
-
-        /// <summary>
-        /// Deletes a product from the database
-        /// </summary>
-        /// <param name="id">The ID of the product to delete</param>
-        public async Task DeleteAsync(int id)
-        {
-            var product = await _context.Products.FindAsync(id);
-            if (product != null)
-            {
-                _context.Products.Remove(product);
-                await _context.SaveChangesAsync();
-            }
-        }
+        _context.Products.Remove(product);
+        _context.SaveChanges();
+        return true;
     }
 } 
