@@ -26,8 +26,10 @@ namespace ProductCatalog.Application.Tests.Commands
             // Arrange
             var command = new DeleteProductCommand { Id = 1 };
 
+            _mockRepository.Setup(r => r.GetByIdAsync(1))
+                .ReturnsAsync(new Product(1, "Test", "Test", 10m, 10));
             _mockRepository.Setup(r => r.DeleteAsync(1))
-                .Returns(Task.CompletedTask);
+                .ReturnsAsync(true);
 
             // Act
             var result = await _handler.Handle(command, CancellationToken.None);
@@ -52,12 +54,9 @@ namespace ProductCatalog.Application.Tests.Commands
         [Fact]
         public async Task Handle_NullCommand_ShouldThrowArgumentNullException()
         {
-            // Arrange
-            DeleteProductCommand? command = null;
-
             // Act & Assert
             await Assert.ThrowsAsync<ArgumentNullException>(() => 
-                _handler.Handle(command!, CancellationToken.None));
+                _handler.Handle(null!, CancellationToken.None));
             _mockRepository.Verify(r => r.DeleteAsync(It.IsAny<int>()), Times.Never);
         }
     }

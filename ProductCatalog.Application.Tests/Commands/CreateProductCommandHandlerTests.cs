@@ -48,13 +48,7 @@ namespace ProductCatalog.Application.Tests.Commands
         public async Task Handle_InvalidPrice_ShouldThrowArgumentException()
         {
             // Arrange
-            var command = new CreateProductCommand
-            {
-                Name = "Test Product",
-                Description = "Test Description",
-                Price = -100,
-                Stock = 10
-            };
+            var command = new CreateProductCommand("Test Product", "Test Description", -100m, 10);
 
             // Act & Assert
             await Assert.ThrowsAsync<ArgumentException>(() => 
@@ -66,13 +60,7 @@ namespace ProductCatalog.Application.Tests.Commands
         public async Task Handle_InvalidStock_ShouldThrowArgumentException()
         {
             // Arrange
-            var command = new CreateProductCommand
-            {
-                Name = "Test Product",
-                Description = "Test Description",
-                Price = 100,
-                Stock = -10
-            };
+            var command = new CreateProductCommand("Test Product", "Test Description", 100m, -10);
 
             // Act & Assert
             await Assert.ThrowsAsync<ArgumentException>(() => 
@@ -84,13 +72,7 @@ namespace ProductCatalog.Application.Tests.Commands
         public async Task Handle_EmptyName_ShouldThrowArgumentException()
         {
             // Arrange
-            var command = new CreateProductCommand
-            {
-                Name = string.Empty,
-                Description = "Test Description",
-                Price = 100,
-                Stock = 10
-            };
+            var command = new CreateProductCommand(string.Empty, "Test Description", 100m, 10);
 
             // Act & Assert
             await Assert.ThrowsAsync<ArgumentException>(() => 
