@@ -31,5 +31,20 @@ namespace ProductCatalog.Domain.Entities
                 throw new ArgumentException("Stock cannot be negative");
             Stock = newStock;
         }
+
+        public void Update(string name, string description, decimal price, int stock)
+        {
+            if (string.IsNullOrEmpty(name))
+                throw new ArgumentException("Name cannot be empty");
+            if (price < 0)
+                throw new ArgumentException("Price cannot be negative");
+            if (stock < 0)
+                throw new ArgumentException("Stock cannot be negative");
+
+            Name = name;
+            Description = description;
+            Price = price;
+            Stock = stock;
+        }
     }
 } 

@@ -32,7 +32,13 @@ namespace ProductCatalog.Infrastructure.Persistence.Repositories
 
         public async Task UpdateAsync(Product product)
         {
-            _context.Entry(product).State = EntityState.Modified;
+            var existingProduct = await _context.Products.FindAsync(product.Id);
+            if (existingProduct == null)
+            {
+                throw new KeyNotFoundException($"Product with ID {product.Id} not found.");
+            }
+
+            _context.Entry(existingProduct).CurrentValues.SetValues(product);
             await _context.SaveChangesAsync();
         }
 
