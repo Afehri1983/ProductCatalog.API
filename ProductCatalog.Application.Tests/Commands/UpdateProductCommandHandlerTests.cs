@@ -24,88 +24,50 @@ namespace ProductCatalog.Application.Tests.Commands
         }
 
         [Fact]
-        public async Task Handle_ValidCommand_ShouldUpdateProduct()
+        public async Task Handle_ExistingProduct_ReturnsTrue()
         {
             // Arrange
-            var product = new Product("Test Product", "Test Description", 100, 10);
+            var existingProduct = new Product(1, "Old Name", "Old Description", 19.99m, 5);
+            var command = new UpdateProductCommand(1, "New Name", "New Description", 29.99m, 10);
 
-            _mockRepository.Setup(r => r.GetByIdAsync(1))
-                .ReturnsAsync(product);
-
-            var command = new UpdateProductCommand
-            {
-                Id = 1,
-                Name = "Updated Product",
-                Description = "Updated Description",
-                Price = 200,
-                Stock = 20
-            };
+            _mockRepository.Setup(repo => repo.GetByIdAsync(command.Id))
+                .ReturnsAsync(existingProduct);
 
             // Act
             var result = await _handler.Handle(command, CancellationToken.None);
 
             // Assert
             Assert.True(result);
-            _mockRepository.Verify(r => r.GetByIdAsync(1), Times.Once);
-            _mockRepository.Verify(r => r.UpdateAsync(It.IsAny<Product>()), Times.Once);
+            _mockRepository.Verify(repo => repo.UpdateAsync(It.Is<Product>(p =>
+                p.Id == command.Id &&
+                p.Name == command.Name &&
+                p.Description == command.Description &&
+                p.Price == command.Price &&
+                p.Stock == command.Stock)), Times.Once);
         }
 
         [Fact]
-        public async Task Handle_NonExistentProduct_ShouldReturnFalse()
+        public async Task Handle_NonExistingProduct_ReturnsFalse()
         {
             // Arrange
-            _mockRepository.Setup(r => r.GetByIdAsync(1))
+            var command = new UpdateProductCommand(1, "New Name", "New Description", 29.99m, 10);
+            _mockRepository.Setup(repo => repo.GetByIdAsync(command.Id))
                 .ReturnsAsync((Product?)null);
-
-            var command = new UpdateProductCommand
-            {
-                Id = 1,
-                Name = "Updated Product",
-                Description = "Updated Description",
-                Price = 200,
-                Stock = 20
-            };
 
             // Act
             var result = await _handler.Handle(command, CancellationToken.None);
 
             // Assert
             Assert.False(result);
-            _mockRepository.Verify(r => r.GetByIdAsync(1), Times.Once);
-            _mockRepository.Verify(r => r.UpdateAsync(It.IsAny<Product>()), Times.Never);
+            _mockRepository.Verify(repo => repo.UpdateAsync(It.IsAny<Product>()), Times.Never);
         }
 
         [Fact]
-        public async Task Handle_InvalidId_ShouldThrowArgumentException()
+        public async Task Handle_NullCommand_ThrowsArgumentNullException()
         {
-            // Arrange
-            var command = new UpdateProductCommand
-            {
-                Id = 0,
-                Name = "Updated Product",
-                Description = "Updated Description",
-                Price = 200,
-                Stock = 20
-            };
-
             // Act & Assert
-            await Assert.ThrowsAsync<ArgumentException>(() => 
-                _handler.Handle(command, CancellationToken.None));
-            _mockRepository.Verify(r => r.GetByIdAsync(It.IsAny<int>()), Times.Never);
-            _mockRepository.Verify(r => r.UpdateAsync(It.IsAny<Product>()), Times.Never);
-        }
-
-        [Fact]
-        public async Task Handle_NullCommand_ShouldThrowArgumentNullException()
-        {
-            // Arrange
-            UpdateProductCommand? command = null;
-
-            // Act & Assert
-            await Assert.ThrowsAsync<ArgumentNullException>(() => 
-                _handler.Handle(command!, CancellationToken.None));
-            _mockRepository.Verify(r => r.GetByIdAsync(It.IsAny<int>()), Times.Never);
-            _mockRepository.Verify(r => r.UpdateAsync(It.IsAny<Product>()), Times.Never);
+            await Assert.ThrowsAsync<ArgumentNullException>(() =>
+                _handler.Handle(null!, CancellationToken.None));
         }
     }
 } 

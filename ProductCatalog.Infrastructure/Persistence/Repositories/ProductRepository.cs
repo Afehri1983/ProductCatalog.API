@@ -19,9 +19,9 @@ public class ProductRepository : IProductRepository
     /// <summary>
     /// Retrieves all products from the database
     /// </summary>
-    public IEnumerable<Product> GetAll()
+    public async Task<IEnumerable<Product>> GetAllAsync()
     {
-        return _context.Products.ToList();
+        return await _context.Products.ToListAsync();
     }
 
     /// <summary>
@@ -29,9 +29,9 @@ public class ProductRepository : IProductRepository
     /// </summary>
     /// <param name="id">The ID of the product to retrieve</param>
     /// <returns>The product if found, null otherwise</returns>
-    public Product? GetById(int id)
+    public async Task<Product?> GetByIdAsync(int id)
     {
-        return _context.Products.Find(id);
+        return await _context.Products.FindAsync(id);
     }
 
     /// <summary>
@@ -39,10 +39,10 @@ public class ProductRepository : IProductRepository
     /// </summary>
     /// <param name="product">The product to add</param>
     /// <returns>The ID of the newly created product</returns>
-    public int Add(Product product)
+    public async Task<int> AddAsync(Product product)
     {
         _context.Products.Add(product);
-        _context.SaveChanges();
+        await _context.SaveChangesAsync();
         return product.Id;
     }
 
@@ -51,32 +51,32 @@ public class ProductRepository : IProductRepository
     /// </summary>
     /// <param name="product">The product to update</param>
     /// <exception cref="KeyNotFoundException">Thrown when the product is not found</exception>
-    public void Update(Product product)
+    public async Task UpdateAsync(Product product)
     {
-        var existingProduct = _context.Products.Find(product.Id);
+        var existingProduct = await _context.Products.FindAsync(product.Id);
         if (existingProduct == null)
         {
             throw new KeyNotFoundException($"Product with ID {product.Id} not found");
         }
 
         _context.Entry(existingProduct).CurrentValues.SetValues(product);
-        _context.SaveChanges();
+        await _context.SaveChangesAsync();
     }
 
     /// <summary>
     /// Deletes a product from the database
     /// </summary>
     /// <param name="id">The ID of the product to delete</param>
-    public bool Delete(int id)
+    public async Task<bool> DeleteAsync(int id)
     {
-        var product = _context.Products.Find(id);
+        var product = await GetByIdAsync(id);
         if (product == null)
         {
             return false;
         }
 
         _context.Products.Remove(product);
-        _context.SaveChanges();
+        await _context.SaveChangesAsync();
         return true;
     }
 } 

@@ -1,4 +1,5 @@
 using MediatR;
+using Microsoft.Extensions.Logging;
 using ProductCatalog.Application.Common.Interfaces;
 using ProductCatalog.Domain.Entities;
 
@@ -10,15 +11,18 @@ namespace ProductCatalog.Application.Products.Commands.CreateProduct
     public class CreateProductCommandHandler : IRequestHandler<CreateProductCommand, int>
     {
         private readonly IProductRepository _repository;
+        private readonly ILogger<CreateProductCommandHandler> _logger;
 
         /// <summary>
         /// Initializes a new instance of the CreateProductCommandHandler
         /// </summary>
         /// <param name="repository">The product repository</param>
+        /// <param name="logger">The logger</param>
         /// <exception cref="ArgumentNullException">Thrown when repository is null</exception>
-        public CreateProductCommandHandler(IProductRepository repository)
+        public CreateProductCommandHandler(IProductRepository repository, ILogger<CreateProductCommandHandler> logger)
         {
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+            _logger = logger;
         }
 
         /// <summary>
@@ -33,14 +37,20 @@ namespace ProductCatalog.Application.Products.Commands.CreateProduct
             if (request == null)
                 throw new ArgumentNullException(nameof(request));
 
-            var entity = new Product(
+            _logger.LogInformation("Creating new product with name: {Name}", request.Name);
+
+            var product = new Product(
+                0, // Temporary ID, will be replaced by the database
                 request.Name,
                 request.Description,
                 request.Price,
                 request.Stock
             );
 
-            return await _repository.AddAsync(entity);
+            var id = await _repository.AddAsync(product);
+            
+            _logger.LogInformation("Successfully created product with ID: {Id}", id);
+            return id;
         }
     }
 } 

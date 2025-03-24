@@ -28,9 +28,11 @@ namespace ProductCatalog.Infrastructure.Repositories
 
         public virtual async Task<int> AddAsync(T entity)
         {
-            _dbSet.Add(entity);
+            await _dbSet.AddAsync(entity);
             await _context.SaveChangesAsync();
-            return (entity as dynamic).Id;
+            
+            var idProperty = _context.Entry(entity).Property("Id");
+            return (int)idProperty.CurrentValue!;
         }
 
         public virtual async Task UpdateAsync(T entity)
@@ -39,14 +41,17 @@ namespace ProductCatalog.Infrastructure.Repositories
             await _context.SaveChangesAsync();
         }
 
-        public virtual async Task DeleteAsync(int id)
+        public virtual async Task<bool> DeleteAsync(int id)
         {
             var entity = await GetByIdAsync(id);
-            if (entity != null)
+            if (entity == null)
             {
-                _dbSet.Remove(entity);
-                await _context.SaveChangesAsync();
+                return false;
             }
+
+            _dbSet.Remove(entity);
+            await _context.SaveChangesAsync();
+            return true;
         }
     }
 } 

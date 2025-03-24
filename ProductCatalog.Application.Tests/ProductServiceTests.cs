@@ -10,81 +10,109 @@ namespace ProductCatalog.Application.Tests
 {
     public class ProductServiceTests
     {
-        private readonly Mock<IProductRepository> _productRepositoryMock;
+        private readonly Mock<IProductRepository> _mockRepository;
+        private readonly IProductRepository _repository;
 
         public ProductServiceTests()
         {
-            _productRepositoryMock = new Mock<IProductRepository>();
+            _mockRepository = new Mock<IProductRepository>();
+            _repository = _mockRepository.Object;
         }
 
         [Fact]
-        public async Task GetByIdAsync_ShouldReturnProduct_WhenProductExists()
+        public async Task GetAllAsync_ReturnsAllProducts()
         {
             // Arrange
-            var product = new Product("Test Product", "Test Description", 10.0m, 100);
-            _productRepositoryMock.Setup(repo => repo.GetByIdAsync(1)).ReturnsAsync(product);
+            var products = new List<Product>
+            {
+                new Product(1, "Product 1", "Description 1", 19.99m, 5),
+                new Product(2, "Product 2", "Description 2", 29.99m, 10)
+            };
+
+            _mockRepository.Setup(repo => repo.GetAllAsync())
+                .ReturnsAsync(products);
 
             // Act
-            var result = await _productRepositoryMock.Object.GetByIdAsync(1);
+            var result = await _repository.GetAllAsync();
 
             // Assert
-            result.Should().NotBeNull();
-            result.Should().BeEquivalentTo(product);
+            Assert.Equal(products, result);
         }
 
         [Fact]
-        public async Task GetAllAsync_ShouldReturnListOfProducts()
+        public async Task GetByIdAsync_ExistingProduct_ReturnsProduct()
         {
             // Arrange
-            var products = new List<Product> { new Product("Test Product", "Test Description", 10.0m, 100) };
-            _productRepositoryMock.Setup(repo => repo.GetAllAsync()).ReturnsAsync(products);
+            var product = new Product(1, "Test Product", "Test Description", 19.99m, 5);
+            _mockRepository.Setup(repo => repo.GetByIdAsync(1))
+                .ReturnsAsync(product);
 
             // Act
-            var result = await _productRepositoryMock.Object.GetAllAsync();
+            var result = await _repository.GetByIdAsync(1);
 
             // Assert
-            result.Should().BeEquivalentTo(products);
+            Assert.NotNull(result);
+            Assert.Equal(product, result);
         }
 
         [Fact]
-        public async Task AddAsync_ShouldReturnProductId()
+        public async Task GetByIdAsync_NonExistingProduct_ReturnsNull()
         {
             // Arrange
-            var product = new Product("Test Product", "Test Description", 10.0m, 100);
-            _productRepositoryMock.Setup(repo => repo.AddAsync(product)).ReturnsAsync(1);
+            _mockRepository.Setup(repo => repo.GetByIdAsync(1))
+                .ReturnsAsync((Product?)null);
 
             // Act
-            var result = await _productRepositoryMock.Object.AddAsync(product);
+            var result = await _repository.GetByIdAsync(1);
 
             // Assert
-            result.Should().Be(1);
+            Assert.Null(result);
         }
 
         [Fact]
-        public async Task UpdateAsync_ShouldNotThrowException()
+        public async Task AddAsync_ValidProduct_ReturnsId()
         {
             // Arrange
-            var product = new Product("Test Product", "Test Description", 10.0m, 100);
-            _productRepositoryMock.Setup(repo => repo.UpdateAsync(product)).Returns(Task.CompletedTask);
+            var product = new Product(0, "Test Product", "Test Description", 19.99m, 5);
+            var expectedId = 1;
+            _mockRepository.Setup(repo => repo.AddAsync(product))
+                .ReturnsAsync(expectedId);
 
             // Act
-            var action = async () => await _productRepositoryMock.Object.UpdateAsync(product);
+            var result = await _repository.AddAsync(product);
 
             // Assert
-            await action.Should().NotThrowAsync();
+            Assert.Equal(expectedId, result);
         }
 
         [Fact]
-        public async Task DeleteAsync_ShouldNotThrowException()
+        public async Task UpdateAsync_ExistingProduct_DoesNotThrow()
         {
             // Arrange
-            _productRepositoryMock.Setup(repo => repo.DeleteAsync(1)).Returns(Task.CompletedTask);
+            var product = new Product(1, "Test Product", "Test Description", 19.99m, 5);
+            _mockRepository.Setup(repo => repo.UpdateAsync(product))
+                .Returns(Task.CompletedTask);
 
             // Act
-            var action = async () => await _productRepositoryMock.Object.DeleteAsync(1);
+            await _repository.UpdateAsync(product);
 
             // Assert
-            await action.Should().NotThrowAsync();
+            _mockRepository.Verify(repo => repo.UpdateAsync(product), Times.Once);
+        }
+
+        [Fact]
+        public async Task DeleteAsync_ExistingProduct_ReturnsTrue()
+        {
+            // Arrange
+            _mockRepository.Setup(repo => repo.DeleteAsync(1))
+                .ReturnsAsync(true);
+
+            // Act
+            var result = await _repository.DeleteAsync(1);
+
+            // Assert
+            Assert.True(result);
+            _mockRepository.Verify(repo => repo.DeleteAsync(1), Times.Once);
         }
     }
 }

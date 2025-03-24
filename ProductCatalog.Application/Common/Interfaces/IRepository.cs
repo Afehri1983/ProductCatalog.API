@@ -9,6 +9,6 @@ namespace ProductCatalog.Application.Common.Interfaces
         Task<T?> GetByIdAsync(int id);
         Task<int> AddAsync(T entity);
         Task UpdateAsync(T entity);
-        Task DeleteAsync(int id);
+        Task<bool> DeleteAsync(int id);
     }
 } 

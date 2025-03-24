@@ -1,5 +1,6 @@
 using MediatR;
 using System.ComponentModel.DataAnnotations;
+using ProductCatalog.Domain.Constants;
 
 namespace ProductCatalog.Application.Products.Commands.CreateProduct
 {
@@ -12,21 +13,21 @@ namespace ProductCatalog.Application.Products.Commands.CreateProduct
         /// The name of the product
         /// </summary>
         [Required(ErrorMessage = "Name is required")]
-        [StringLength(100, ErrorMessage = "Name cannot exceed 100 characters")]
+        [StringLength(ProductConstants.NameMaxLength, ErrorMessage = "Name cannot exceed {1} characters")]
         public string Name { get; init; } = string.Empty;
 
         /// <summary>
         /// The description of the product
         /// </summary>
         [Required(ErrorMessage = "Description is required")]
-        [StringLength(500, ErrorMessage = "Description cannot exceed 500 characters")]
+        [StringLength(ProductConstants.DescriptionMaxLength, ErrorMessage = "Description cannot exceed {1} characters")]
         public string Description { get; init; } = string.Empty;
 
         /// <summary>
         /// The price of the product
         /// </summary>
         [Required(ErrorMessage = "Price is required")]
-        [Range(0.01, double.MaxValue, ErrorMessage = "Price must be greater than 0")]
+        [Range(0.01, double.MaxValue, ErrorMessage = "Price must be greater than {1}")]
         public decimal Price { get; init; }
 
         /// <summary>
@@ -35,5 +36,13 @@ namespace ProductCatalog.Application.Products.Commands.CreateProduct
         [Required(ErrorMessage = "Stock is required")]
         [Range(0, int.MaxValue, ErrorMessage = "Stock cannot be negative")]
         public int Stock { get; init; }
+
+        public CreateProductCommand(string name, string description, decimal price, int stock)
+        {
+            Name = name;
+            Description = description;
+            Price = price;
+            Stock = stock;
+        }
     }
 } 
