@@ -22,11 +22,18 @@ builder.Services.AddScoped<IProductRepository, ProductRepository>();
 
 var app = builder.Build();
 
+// Ensure database is created
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<ProductCatalogDbContext>();
+    context.Database.EnsureCreated();
+}
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-  app.UseSwagger();
-  app.UseSwaggerUI();
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
 app.UseHttpsRedirection();

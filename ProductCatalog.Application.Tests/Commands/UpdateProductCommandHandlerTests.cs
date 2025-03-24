@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using Moq;
 using ProductCatalog.Application.Common.Interfaces;
 using ProductCatalog.Application.Products.Commands.UpdateProduct;
@@ -12,12 +13,14 @@ namespace ProductCatalog.Application.Tests.Commands
     public class UpdateProductCommandHandlerTests
     {
         private readonly Mock<IProductRepository> _mockRepository;
+        private readonly Mock<ILogger<UpdateProductCommandHandler>> _mockLogger;
         private readonly UpdateProductCommandHandler _handler;
 
         public UpdateProductCommandHandlerTests()
         {
             _mockRepository = new Mock<IProductRepository>();
-            _handler = new UpdateProductCommandHandler(_mockRepository.Object);
+            _mockLogger = new Mock<ILogger<UpdateProductCommandHandler>>();
+            _handler = new UpdateProductCommandHandler(_mockRepository.Object, _mockLogger.Object);
         }
 
         [Fact]
@@ -52,7 +55,7 @@ namespace ProductCatalog.Application.Tests.Commands
         {
             // Arrange
             _mockRepository.Setup(r => r.GetByIdAsync(1))
-                .ReturnsAsync((Product)null);
+                .ReturnsAsync((Product?)null);
 
             var command = new UpdateProductCommand
             {

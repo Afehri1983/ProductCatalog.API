@@ -53,11 +53,11 @@ namespace ProductCatalog.Application.Tests.Commands
         public async Task Handle_NullCommand_ShouldThrowArgumentNullException()
         {
             // Arrange
-            DeleteProductCommand command = null;
+            DeleteProductCommand? command = null;
 
             // Act & Assert
             await Assert.ThrowsAsync<ArgumentNullException>(() => 
-                _handler.Handle(command, CancellationToken.None));
+                _handler.Handle(command!, CancellationToken.None));
             _mockRepository.Verify(r => r.DeleteAsync(It.IsAny<int>()), Times.Never);
         }
     }

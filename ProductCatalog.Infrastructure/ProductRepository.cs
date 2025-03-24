@@ -34,7 +34,13 @@ namespace ProductCatalog.Infrastructure.Repositories
 
         public async Task UpdateAsync(Product product)
         {
-            _context.Entry(product).State = EntityState.Modified;
+            var existingProduct = await _context.Products.FindAsync(product.Id);
+            if (existingProduct == null)
+            {
+                throw new KeyNotFoundException($"Product with ID {product.Id} not found");
+            }
+
+            existingProduct.Update(product.Name, product.Description, product.Price, product.Stock);
             await _context.SaveChangesAsync();
         }
 
