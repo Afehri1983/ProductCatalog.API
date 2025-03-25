@@ -1,10 +1,7 @@
-using FluentAssertions;
 using Moq;
 using ProductCatalog.Application.Common.Interfaces;
 using ProductCatalog.Domain.Entities;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using Xunit;
+
 
 namespace ProductCatalog.Application.Tests
 {

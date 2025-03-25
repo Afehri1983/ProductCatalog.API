@@ -1,11 +1,8 @@
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 using Moq;
 using ProductCatalog.Application.Common.Interfaces;
 using ProductCatalog.Application.Products.Commands.DeleteProduct;
 using ProductCatalog.Domain.Entities;
-using Xunit;
+
 
 namespace ProductCatalog.Application.Tests.Commands
 {

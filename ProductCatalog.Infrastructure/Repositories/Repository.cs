@@ -1,7 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using ProductCatalog.Application.Common.Interfaces;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace ProductCatalog.Infrastructure.Repositories
 {

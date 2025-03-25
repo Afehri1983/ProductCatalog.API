@@ -15,5 +15,6 @@
     <Content Include="Services\ProductService.cs" />
     <Content Include="Common\Interfaces\IProductRepository.cs" />
     <Content Include="Products\Commands\CreateProduct\CreateProductCommandHandler.cs" />
+    <Content Include="Products\Commands\CreateProduct\CreateProductCommand.cs" />
   </ItemGroup>
 </Project>
