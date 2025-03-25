@@ -13,5 +13,6 @@
   <ItemGroup>
     <ProjectReference Include="..\ProductCatalog.Domain\ProductCatalog.Domain.csproj" />
     <Content Include="Services\ProductService.cs" />
+    <Content Include="Common\Interfaces\IProductRepository.cs" />
   </ItemGroup>
 </Project>
