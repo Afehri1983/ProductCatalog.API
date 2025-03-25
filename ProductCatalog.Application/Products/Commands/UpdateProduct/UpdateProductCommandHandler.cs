@@ -15,8 +15,8 @@ public class UpdateProductCommandHandler : IRequestHandler<UpdateProductCommand,
 
     public UpdateProductCommandHandler(IProductRepository repository, ILogger<UpdateProductCommandHandler> logger)
     {
-        _repository = repository;
-        _logger = logger;
+        _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     /// <summary>
@@ -27,6 +27,9 @@ public class UpdateProductCommandHandler : IRequestHandler<UpdateProductCommand,
     /// <returns>True if the product was updated, false if the product was not found</returns>
     public async Task<bool> Handle(UpdateProductCommand request, CancellationToken cancellationToken)
     {
+        if (request == null)
+            throw new ArgumentNullException(nameof(request));
+
         _logger.LogInformation("Attempting to update product with ID: {Id}", request.Id);
 
         var existingProduct = await _repository.GetByIdAsync(request.Id);

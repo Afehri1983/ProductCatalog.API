@@ -37,6 +37,15 @@ namespace ProductCatalog.Application.Products.Commands.CreateProduct
             if (request == null)
                 throw new ArgumentNullException(nameof(request));
 
+            if (string.IsNullOrEmpty(request.Name))
+                throw new ArgumentException("Name cannot be empty", nameof(request.Name));
+
+            if (request.Price <= 0)
+                throw new ArgumentException("Price must be greater than 0", nameof(request.Price));
+
+            if (request.Stock < 0)
+                throw new ArgumentException("Stock cannot be negative", nameof(request.Stock));
+
             _logger.LogInformation("Creating new product with name: {Name}", request.Name);
 
             var product = new Product(

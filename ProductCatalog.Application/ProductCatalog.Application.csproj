@@ -14,5 +14,6 @@
     <ProjectReference Include="..\ProductCatalog.Domain\ProductCatalog.Domain.csproj" />
     <Content Include="Services\ProductService.cs" />
     <Content Include="Common\Interfaces\IProductRepository.cs" />
+    <Content Include="Products\Commands\CreateProduct\CreateProductCommandHandler.cs" />
   </ItemGroup>
 </Project>

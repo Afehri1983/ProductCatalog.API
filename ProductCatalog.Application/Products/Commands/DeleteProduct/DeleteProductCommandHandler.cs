@@ -32,6 +32,9 @@ namespace ProductCatalog.Application.Products.Commands.DeleteProduct
             if (request == null)
                 throw new ArgumentNullException(nameof(request));
 
+            if (request.Id <= 0)
+                throw new ArgumentException("Id must be greater than 0", nameof(request.Id));
+
             var product = await _repository.GetByIdAsync(request.Id);
             if (product == null)
                 return false;
