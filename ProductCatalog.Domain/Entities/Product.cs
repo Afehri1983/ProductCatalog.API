@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace ProductCatalog.Domain.Entities;
 
 public class Product
@@ -14,10 +16,30 @@ public class Product
     }
 
     public int Id { get; private set; }
+    
+    [Required]
+    [MaxLength(100)]
     public string Name { get; private set; } = string.Empty;
+    
+    [Required]
+    [MaxLength(500)]
     public string Description { get; private set; } = string.Empty;
+    
+    [Required]
+    [Range(0.01, double.MaxValue)]
     public decimal Price { get; private set; }
+    
+    [Required]
+    [Range(0, int.MaxValue)]
     public int Stock { get; private set; }
+
+    public bool CanUpdatePrice(decimal newPrice)
+    {
+        if (Price == 0) return true;
+        
+        var priceChangePercentage = Math.Abs((newPrice - Price) / Price * 100);
+        return priceChangePercentage <= 20;
+    }
 
     public void UpdateStock(int newStock)
     {

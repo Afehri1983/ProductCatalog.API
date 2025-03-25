@@ -15,8 +15,8 @@ public class UpdateProductCommandHandler : IRequestHandler<UpdateProductCommand,
 
     public UpdateProductCommandHandler(IProductRepository repository, ILogger<UpdateProductCommandHandler> logger)
     {
-        _repository = repository ?? throw new ArgumentNullException(nameof(repository));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _repository = repository;
+        _logger = logger;
     }
 
     /// <summary>
@@ -28,30 +28,26 @@ public class UpdateProductCommandHandler : IRequestHandler<UpdateProductCommand,
     public async Task<bool> Handle(UpdateProductCommand request, CancellationToken cancellationToken)
     {
         if (request == null)
-            throw new ArgumentNullException(nameof(request));
-
-        _logger.LogInformation("Attempting to update product with ID: {Id}", request.Id);
-
-        var existingProduct = await _repository.GetByIdAsync(request.Id);
-        if (existingProduct == null)
         {
-            _logger.LogWarning("Product with ID {Id} not found", request.Id);
+            _logger.LogWarning("UpdateProductCommand is null");
             return false;
         }
 
-        _logger.LogInformation("Found product with ID: {Id}, updating properties", request.Id);
+        var product = await _repository.GetByIdAsync(request.Id);
+        if (product == null)
+        {
+            _logger.LogWarning("Product with ID {ProductId} not found", request.Id);
+            return false;
+        }
 
-        var product = new Product(
-            request.Id,
-            request.Name,
-            request.Description,
-            request.Price,
-            request.Stock
-        );
+        if (!product.CanUpdatePrice(request.Price))
+        {
+            _logger.LogWarning("Price change for product {ProductId} exceeds 20% limit", request.Id);
+            return false;
+        }
 
+        product.Update(request.Name, request.Description, request.Price, request.Stock);
         await _repository.UpdateAsync(product);
-        
-        _logger.LogInformation("Successfully updated product with ID: {Id}", request.Id);
         return true;
     }
 } 

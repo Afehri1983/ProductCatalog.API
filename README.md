@@ -10,6 +10,14 @@ A clean architecture implementation of a Product Catalog API using .NET 8.0.
 - Swagger UI for API documentation and testing
 - Unit tests with xUnit
 - Repository pattern for data access abstraction
+- Business rules validation
+
+## Business Rules
+
+1. **Price Change Limitation**
+   - Product price changes are limited to a maximum of 20% per update
+   - This rule prevents dramatic price fluctuations and protects against input errors
+   - Example: For a product priced at $100, the new price must be between $80 and $120
 
 ## Project Structure
 
@@ -39,8 +47,30 @@ A clean architecture implementation of a Product Catalog API using .NET 8.0.
 - GET /api/Products - Get all products
 - GET /api/Products/{id} - Get a product by ID
 - POST /api/Products - Create a new product
-- PUT /api/Products/{id} - Update an existing product
+- PUT /api/Products/{id} - Update an existing product (subject to 20% price change limit)
 - DELETE /api/Products/{id} - Delete a product
+
+### Example Requests
+
+1. Create a new product:
+```json
+{
+    "name": "Test Product",
+    "description": "A test product description",
+    "price": 99.99,
+    "stock": 10
+}
+```
+
+2. Update a product (respecting 20% price change limit):
+```json
+{
+    "name": "Updated Product",
+    "description": "Updated description",
+    "price": 119.99,  // Maximum 20% increase from 99.99
+    "stock": 15
+}
+```
 
 ## Testing
 
@@ -94,6 +124,8 @@ The tests cover various scenarios:
 
 3. **UpdateProductCommandHandler Tests**
    - Valid product update
+   - Price change within 20% limit
+   - Price change exceeding 20% limit
    - Non-existent product handling
    - Null command validation
 
