@@ -1,7 +1,10 @@
+using AutoMapper;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Moq;
 using ProductCatalog.Application.Products.Commands.CreateProduct;
+using ProductCatalog.Application.Products.DTOs;
+using ProductCatalog.Application.Products.Mapping;
 using ProductCatalog.Domain.Entities;
 using ProductCatalog.Domain.Interfaces;
 using Xunit;
@@ -12,13 +15,21 @@ namespace ProductCatalog.Application.Tests.Commands
     {
         private readonly Mock<IProductRepository> _mockRepository;
         private readonly Mock<ILogger<CreateProductCommandHandler>> _mockLogger;
+        private readonly IMapper _mapper;
         private readonly CreateProductCommandHandler _handler;
 
         public CreateProductCommandHandlerTests()
         {
             _mockRepository = new Mock<IProductRepository>();
             _mockLogger = new Mock<ILogger<CreateProductCommandHandler>>();
-            _handler = new CreateProductCommandHandler(_mockRepository.Object, _mockLogger.Object);
+            
+            var mappingConfig = new MapperConfiguration(mc =>
+            {
+                mc.AddProfile(new ProductMappingProfile());
+            });
+            _mapper = mappingConfig.CreateMapper();
+            
+            _handler = new CreateProductCommandHandler(_mockRepository.Object, _mockLogger.Object, _mapper);
         }
 
         [Fact]
