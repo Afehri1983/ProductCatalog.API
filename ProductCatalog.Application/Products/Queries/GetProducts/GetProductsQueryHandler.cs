@@ -1,48 +1,45 @@
 using MediatR;
-using ProductCatalog.Application.Common.Interfaces;
-using ProductCatalog.Application.Products.DTOs;
+using Microsoft.Extensions.Logging;
+using ProductCatalog.Domain.Entities;
+using ProductCatalog.Domain.Interfaces;
 
-namespace ProductCatalog.Application.Products.Queries.GetProducts
+namespace ProductCatalog.Application.Products.Queries.GetProducts;
+
+/// <summary>
+/// Handler for retrieving all products
+/// </summary>
+public class GetProductsQueryHandler : IRequestHandler<GetProductsQuery, IEnumerable<Product>>
 {
+    private readonly IProductRepository _repository;
+    private readonly ILogger<GetProductsQueryHandler> _logger;
+
     /// <summary>
-    /// Handler for retrieving all products
+    /// Initializes a new instance of the GetProductsQueryHandler
     /// </summary>
-    public class GetProductsQueryHandler : IRequestHandler<GetProductsQuery, IEnumerable<ProductDto>>
+    /// <param name="repository">The product repository</param>
+    /// <param name="logger">The logger</param>
+    /// <exception cref="ArgumentNullException">Thrown when repository is null</exception>
+    public GetProductsQueryHandler(IProductRepository repository, ILogger<GetProductsQueryHandler> logger)
     {
-        private readonly IProductRepository _repository;
+        _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+        _logger = logger;
+    }
 
-        /// <summary>
-        /// Initializes a new instance of the GetProductsQueryHandler
-        /// </summary>
-        /// <param name="repository">The product repository</param>
-        /// <exception cref="ArgumentNullException">Thrown when repository is null</exception>
-        public GetProductsQueryHandler(IProductRepository repository)
+    /// <summary>
+    /// Handles the get products query
+    /// </summary>
+    /// <param name="request">The get products query</param>
+    /// <param name="cancellationToken">The cancellation token</param>
+    /// <returns>A collection of products</returns>
+    /// <exception cref="ArgumentNullException">Thrown when request is null</exception>
+    public async Task<IEnumerable<Product>> Handle(GetProductsQuery request, CancellationToken cancellationToken)
+    {
+        if (request == null)
         {
-            _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+            _logger.LogWarning("GetProductsQuery is null");
+            return Enumerable.Empty<Product>();
         }
 
-        /// <summary>
-        /// Handles the get products query
-        /// </summary>
-        /// <param name="request">The get products query</param>
-        /// <param name="cancellationToken">The cancellation token</param>
-        /// <returns>A collection of product DTOs</returns>
-        /// <exception cref="ArgumentNullException">Thrown when request is null</exception>
-        public async Task<IEnumerable<ProductDto>> Handle(GetProductsQuery request, CancellationToken cancellationToken)
-        {
-            if (request == null)
-                throw new ArgumentNullException(nameof(request));
-
-            var products = await _repository.GetAllAsync();
-            
-            return products.Select(p => new ProductDto
-            {
-                Id = p.Id,
-                Name = p.Name,
-                Description = p.Description,
-                Price = p.Price,
-                Stock = p.Stock
-            });
-        }
+        return await _repository.GetAllAsync();
     }
 } 

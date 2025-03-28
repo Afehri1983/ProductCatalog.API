@@ -1,33 +1,30 @@
 using Microsoft.EntityFrameworkCore;
-using ProductCatalog.Application.Common.Interfaces;
-using ProductCatalog.Infrastructure;
-using ProductCatalog.Infrastructure.Persistence.Repositories;
+using ProductCatalog.Domain.Interfaces;
+using ProductCatalog.Infrastructure.Persistence;
+using ProductCatalog.Infrastructure.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllers();
+
+// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+// Add DbContext
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseInMemoryDatabase("ProductCatalog"));
+
+// Add repositories
+builder.Services.AddScoped<IProductRepository, ProductRepository>();
 
 // Add MediatR
 builder.Services.AddMediatR(cfg => {
     cfg.RegisterServicesFromAssembly(typeof(ProductCatalog.Application.Products.Commands.CreateProduct.CreateProductCommand).Assembly);
 });
 
-// Add Infrastructure
-builder.Services.AddDbContext<ProductCatalogDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
-builder.Services.AddScoped<IProductRepository, ProductRepository>();
-
 var app = builder.Build();
-
-// Ensure database is created
-using (var scope = app.Services.CreateScope())
-{
-    var context = scope.ServiceProvider.GetRequiredService<ProductCatalogDbContext>();
-    context.Database.EnsureCreated();
-}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -37,6 +34,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
 app.UseAuthorization();
 
 app.MapControllers();

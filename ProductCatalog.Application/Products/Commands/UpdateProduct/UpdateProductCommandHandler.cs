@@ -1,7 +1,7 @@
 using MediatR;
 using Microsoft.Extensions.Logging;
-using ProductCatalog.Application.Common.Interfaces;
 using ProductCatalog.Domain.Entities;
+using ProductCatalog.Domain.Interfaces;
 
 namespace ProductCatalog.Application.Products.Commands.UpdateProduct;
 

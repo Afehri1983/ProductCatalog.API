@@ -1,14 +1,15 @@
 using Microsoft.EntityFrameworkCore;
-using ProductCatalog.Application.Common.Interfaces;
+using ProductCatalog.Domain.Interfaces;
+using ProductCatalog.Infrastructure.Persistence;
 
 namespace ProductCatalog.Infrastructure.Repositories
 {
     public class Repository<T> : IRepository<T> where T : class
     {
-        protected readonly DbContext _context;
+        protected readonly ApplicationDbContext _context;
         protected readonly DbSet<T> _dbSet;
 
-        public Repository(DbContext context)
+        public Repository(ApplicationDbContext context)
         {
             _context = context;
             _dbSet = context.Set<T>();
@@ -28,9 +29,8 @@ namespace ProductCatalog.Infrastructure.Repositories
         {
             await _dbSet.AddAsync(entity);
             await _context.SaveChangesAsync();
-            
-            var idProperty = _context.Entry(entity).Property("Id");
-            return (int)idProperty.CurrentValue!;
+            var idProperty = typeof(T).GetProperty("Id");
+            return (int)idProperty?.GetValue(entity)!;
         }
 
         public virtual async Task UpdateAsync(T entity)

@@ -1,9 +1,10 @@
+using FluentAssertions;
+using Microsoft.Extensions.Logging;
 using Moq;
-using ProductCatalog.Application.Common.Interfaces;
 using ProductCatalog.Application.Products.Commands.CreateProduct;
 using ProductCatalog.Domain.Entities;
+using ProductCatalog.Domain.Interfaces;
 using Xunit;
-using Microsoft.Extensions.Logging;
 
 namespace ProductCatalog.Application.Tests.Commands
 {
@@ -24,16 +25,15 @@ namespace ProductCatalog.Application.Tests.Commands
         public async Task Handle_ValidProduct_ReturnsId()
         {
             // Arrange
-            var command = new CreateProductCommand("Test Product", "Test Description", 9.99m, 10);
-            var expectedId = 1;
+            var command = new CreateProductCommand("Test Product", "Description", 10.99m, 5);
             _mockRepository.Setup(repo => repo.AddAsync(It.IsAny<Product>()))
-                .ReturnsAsync(expectedId);
+                .ReturnsAsync(1);
 
             // Act
             var result = await _handler.Handle(command, CancellationToken.None);
 
             // Assert
-            Assert.Equal(expectedId, result);
+            result.Should().Be(1);
             _mockRepository.Verify(repo => repo.AddAsync(It.Is<Product>(p =>
                 p.Name == command.Name &&
                 p.Description == command.Description &&
@@ -41,40 +41,20 @@ namespace ProductCatalog.Application.Tests.Commands
                 p.Stock == command.Stock)), Times.Once);
         }
 
-        [Fact]
-        public async Task Handle_InvalidPrice_ShouldThrowArgumentException()
+        [Theory]
+        [InlineData("", "Description", 10.99, 5)]
+        [InlineData("Test Product", "", 10.99, 5)]
+        [InlineData("Test Product", "Description", 0, 5)]
+        [InlineData("Test Product", "Description", -1, 5)]
+        [InlineData("Test Product", "Description", 10.99, -1)]
+        public async Task Handle_InvalidProduct_ThrowsArgumentException(string name, string description, decimal price, int stock)
         {
             // Arrange
-            var command = new CreateProductCommand("Test Product", "Test Description", -100m, 10);
+            var command = new CreateProductCommand(name, description, price, stock);
 
             // Act & Assert
-            await Assert.ThrowsAsync<ArgumentException>(() => 
-                _handler.Handle(command, CancellationToken.None));
-            _mockRepository.Verify(r => r.AddAsync(It.IsAny<Product>()), Times.Never);
-        }
-
-        [Fact]
-        public async Task Handle_InvalidStock_ShouldThrowArgumentException()
-        {
-            // Arrange
-            var command = new CreateProductCommand("Test Product", "Test Description", 100m, -10);
-
-            // Act & Assert
-            await Assert.ThrowsAsync<ArgumentException>(() => 
-                _handler.Handle(command, CancellationToken.None));
-            _mockRepository.Verify(r => r.AddAsync(It.IsAny<Product>()), Times.Never);
-        }
-
-        [Fact]
-        public async Task Handle_EmptyName_ShouldThrowArgumentException()
-        {
-            // Arrange
-            var command = new CreateProductCommand(string.Empty, "Test Description", 100m, 10);
-
-            // Act & Assert
-            await Assert.ThrowsAsync<ArgumentException>(() => 
-                _handler.Handle(command, CancellationToken.None));
-            _mockRepository.Verify(r => r.AddAsync(It.IsAny<Product>()), Times.Never);
+            await Assert.ThrowsAsync<ArgumentException>(() => _handler.Handle(command, CancellationToken.None));
+            _mockRepository.Verify(repo => repo.AddAsync(It.IsAny<Product>()), Times.Never);
         }
 
         [Fact]

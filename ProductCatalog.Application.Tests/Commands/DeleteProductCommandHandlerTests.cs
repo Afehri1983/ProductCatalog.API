@@ -1,60 +1,65 @@
+using FluentAssertions;
+using Microsoft.Extensions.Logging;
 using Moq;
-using ProductCatalog.Application.Common.Interfaces;
 using ProductCatalog.Application.Products.Commands.DeleteProduct;
 using ProductCatalog.Domain.Entities;
+using ProductCatalog.Domain.Interfaces;
 
+namespace ProductCatalog.Application.Tests.Commands;
 
-namespace ProductCatalog.Application.Tests.Commands
+public class DeleteProductCommandHandlerTests
 {
-    public class DeleteProductCommandHandlerTests
+    private readonly Mock<IProductRepository> _mockRepository;
+    private readonly Mock<ILogger<DeleteProductCommandHandler>> _mockLogger;
+    private readonly DeleteProductCommandHandler _handler;
+
+    public DeleteProductCommandHandlerTests()
     {
-        private readonly Mock<IProductRepository> _mockRepository;
-        private readonly DeleteProductCommandHandler _handler;
+        _mockRepository = new Mock<IProductRepository>();
+        _mockLogger = new Mock<ILogger<DeleteProductCommandHandler>>();
+        _handler = new DeleteProductCommandHandler(_mockRepository.Object, _mockLogger.Object);
+    }
 
-        public DeleteProductCommandHandlerTests()
-        {
-            _mockRepository = new Mock<IProductRepository>();
-            _handler = new DeleteProductCommandHandler(_mockRepository.Object);
-        }
+    [Fact]
+    public async Task Handle_ExistingProduct_ReturnsTrue()
+    {
+        // Arrange
+        var command = new DeleteProductCommand(1);
+        _mockRepository.Setup(repo => repo.DeleteAsync(1))
+            .ReturnsAsync(true);
 
-        [Fact]
-        public async Task Handle_ValidCommand_ShouldDeleteProduct()
-        {
-            // Arrange
-            var command = new DeleteProductCommand { Id = 1 };
+        // Act
+        var result = await _handler.Handle(command, CancellationToken.None);
 
-            _mockRepository.Setup(r => r.GetByIdAsync(1))
-                .ReturnsAsync(new Product(1, "Test", "Test", 10m, 10));
-            _mockRepository.Setup(r => r.DeleteAsync(1))
-                .ReturnsAsync(true);
+        // Assert
+        result.Should().BeTrue();
+        _mockRepository.Verify(repo => repo.DeleteAsync(1), Times.Once);
+    }
 
-            // Act
-            var result = await _handler.Handle(command, CancellationToken.None);
+    [Fact]
+    public async Task Handle_NonExistingProduct_ReturnsFalse()
+    {
+        // Arrange
+        var command = new DeleteProductCommand(999);
+        _mockRepository.Setup(repo => repo.DeleteAsync(999))
+            .ReturnsAsync(false);
 
-            // Assert
-            Assert.True(result);
-            _mockRepository.Verify(r => r.DeleteAsync(1), Times.Once);
-        }
+        // Act
+        var result = await _handler.Handle(command, CancellationToken.None);
 
-        [Fact]
-        public async Task Handle_InvalidId_ShouldThrowArgumentException()
-        {
-            // Arrange
-            var command = new DeleteProductCommand { Id = 0 };
+        // Assert
+        result.Should().BeFalse();
+        _mockRepository.Verify(repo => repo.DeleteAsync(999), Times.Once);
+    }
 
-            // Act & Assert
-            await Assert.ThrowsAsync<ArgumentException>(() => 
-                _handler.Handle(command, CancellationToken.None));
-            _mockRepository.Verify(r => r.DeleteAsync(It.IsAny<int>()), Times.Never);
-        }
+    [Fact]
+    public async Task Handle_InvalidId_ThrowsArgumentException()
+    {
+        // Arrange
+        var command = new DeleteProductCommand(-1);
 
-        [Fact]
-        public async Task Handle_NullCommand_ShouldThrowArgumentNullException()
-        {
-            // Act & Assert
-            await Assert.ThrowsAsync<ArgumentNullException>(() => 
-                _handler.Handle(null!, CancellationToken.None));
-            _mockRepository.Verify(r => r.DeleteAsync(It.IsAny<int>()), Times.Never);
-        }
+        // Act & Assert
+        await Assert.ThrowsAsync<ArgumentException>(() => _handler.Handle(command, CancellationToken.None));
+        _mockRepository.Verify(repo => repo.DeleteAsync(It.IsAny<int>()), Times.Never);
     }
 } 

@@ -1,11 +1,13 @@
-using ProductCatalog.Application.Common.Interfaces;
+using Microsoft.EntityFrameworkCore;
 using ProductCatalog.Domain.Entities;
+using ProductCatalog.Domain.Interfaces;
+using ProductCatalog.Infrastructure.Persistence;
 
 namespace ProductCatalog.Infrastructure.Repositories
 {
     public class ProductRepository : Repository<Product>, IProductRepository
     {
-        public ProductRepository(ProductCatalogDbContext context) : base(context)
+        public ProductRepository(ApplicationDbContext context) : base(context)
         {
         }
 

@@ -1,7 +1,7 @@
 using MediatR;
 using Microsoft.Extensions.Logging;
-using ProductCatalog.Application.Common.Interfaces;
 using ProductCatalog.Domain.Entities;
+using ProductCatalog.Domain.Interfaces;
 
 namespace ProductCatalog.Application.Products.Commands.CreateProduct
 {
@@ -35,21 +35,34 @@ namespace ProductCatalog.Application.Products.Commands.CreateProduct
         public async Task<int> Handle(CreateProductCommand request, CancellationToken cancellationToken)
         {
             if (request == null)
+            {
                 throw new ArgumentNullException(nameof(request));
+            }
 
-            if (string.IsNullOrEmpty(request.Name))
+            if (string.IsNullOrWhiteSpace(request.Name))
+            {
                 throw new ArgumentException("Name cannot be empty", nameof(request.Name));
+            }
+
+            if (string.IsNullOrWhiteSpace(request.Description))
+            {
+                throw new ArgumentException("Description cannot be empty", nameof(request.Description));
+            }
 
             if (request.Price <= 0)
+            {
                 throw new ArgumentException("Price must be greater than 0", nameof(request.Price));
+            }
 
             if (request.Stock < 0)
+            {
                 throw new ArgumentException("Stock cannot be negative", nameof(request.Stock));
+            }
 
             _logger.LogInformation("Creating new product with name: {Name}", request.Name);
 
             var product = new Product(
-                0, // Temporary ID, will be replaced by the database
+                0,  // ID will be set by the database
                 request.Name,
                 request.Description,
                 request.Price,

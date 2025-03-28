@@ -3,8 +3,10 @@ using Microsoft.AspNetCore.Mvc;
 using ProductCatalog.Application.Products.Commands.CreateProduct;
 using ProductCatalog.Application.Products.Commands.DeleteProduct;
 using ProductCatalog.Application.Products.Commands.UpdateProduct;
+using ProductCatalog.Application.Products.Queries.GetProduct;
 using ProductCatalog.Application.Products.Queries.GetProducts;
 using ProductCatalog.Application.Products.DTOs;
+using ProductCatalog.Domain.Entities;
 
 namespace ProductCatalog.API.Controllers
 {
@@ -19,7 +21,7 @@ namespace ProductCatalog.API.Controllers
 
         public ProductsController(IMediator mediator)
         {
-            _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
+            _mediator = mediator;
         }
 
         /// <summary>
@@ -35,20 +37,45 @@ namespace ProductCatalog.API.Controllers
         }
 
         /// <summary>
+        /// Gets a product by ID
+        /// </summary>
+        /// <param name="id">The ID of the product</param>
+        /// <returns>The product with the specified ID</returns>
+        [HttpGet("{id}")]
+        [ProducesResponseType(typeof(ProductDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<ProductDto>> GetProduct(int id)
+        {
+            var query = new GetProductQuery(id);
+            var product = await _mediator.Send(query);
+
+            if (product == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(product);
+        }
+
+        /// <summary>
         /// Creates a new product
         /// </summary>
         /// <param name="command">The product creation command</param>
         /// <returns>The ID of the newly created product</returns>
         [HttpPost]
-        [ProducesResponseType(typeof(int), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(int), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<int>> Create(CreateProductCommand command)
+        public async Task<ActionResult<int>> CreateProduct(CreateProductCommand command)
         {
-            if (command == null)
-                return BadRequest("Command cannot be null");
-
-            var productId = await _mediator.Send(command);
-            return Ok(productId);
+            try
+            {
+                var productId = await _mediator.Send(command);
+                return CreatedAtAction(nameof(GetProduct), new { id = productId }, productId);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         /// <summary>
@@ -61,23 +88,28 @@ namespace ProductCatalog.API.Controllers
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult> Update(int id, UpdateProductCommand command)
+        public async Task<ActionResult> UpdateProduct(int id, UpdateProductCommand command)
         {
-            if (command == null)
-                return BadRequest("Command cannot be null");
+            if (id != command.Id)
+            {
+                return BadRequest("The ID in the URL must match the ID in the request body");
+            }
 
-            if (id <= 0)
-                return BadRequest("Id must be greater than 0");
+            try
+            {
+                var success = await _mediator.Send(command);
 
-            if (command.Id != id)
-                return BadRequest("Id in URL must match Id in request body");
+                if (!success)
+                {
+                    return NotFound();
+                }
 
-            var result = await _mediator.Send(command);
-            
-            if (!result)
-                return NotFound($"Product with ID {id} not found");
-
-            return NoContent();
+                return NoContent();
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         /// <summary>
@@ -88,14 +120,24 @@ namespace ProductCatalog.API.Controllers
         [HttpDelete("{id}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult> Delete(int id)
+        public async Task<ActionResult> DeleteProduct(int id)
         {
-            var result = await _mediator.Send(new DeleteProductCommand { Id = id });
-            
-            if (!result)
-                return NotFound($"Product with ID {id} not found");
+            try
+            {
+                var command = new DeleteProductCommand(id);
+                var success = await _mediator.Send(command);
 
-            return NoContent();
+                if (!success)
+                {
+                    return NotFound();
+                }
+
+                return NoContent();
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
     }
 } 
