@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using ProductCatalog.Domain.Interfaces;
-using ProductCatalog.Infrastructure.Persistence;
+using ProductCatalog.Infrastructure.Data;
 using ProductCatalog.Infrastructure.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -12,13 +12,23 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// Add CORS
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(builder =>
+    {
+        builder.AllowAnyOrigin()
+               .AllowAnyMethod()
+               .AllowAnyHeader();
+    });
+});
 
-builder.Services.AddAutoMapper(typeof(Program).Assembly);
+builder.Services.AddAutoMapper(typeof(Program).Assembly, typeof(ProductCatalog.Application.Products.Mapping.ProductMappingProfile).Assembly);
 
 
 // Add DbContext
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseInMemoryDatabase("ProductCatalog"));
+    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Add repositories
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
@@ -38,6 +48,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// Use CORS
+app.UseCors();
 
 app.UseAuthorization();
 
